@@ -153,8 +153,10 @@ void ZliMagFXDistortionAudioProcessor::processBlock (juce::AudioBuffer<float>& b
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
+        for(auto sample = 0; sample < buffer.getNumSamples(); sample++) {
+            auto gainedSampleValue = channelData[sample] * 10;
+            channelData[sample] = gainedSampleValue > 0.5 ? 0.5 : gainedSampleValue;
+        }
     }
 }
 
