@@ -143,6 +143,8 @@ void ZliMagFXDistortionAudioProcessor::processBlock (juce::AudioBuffer<float>& b
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
+    
+    auto gainParam = parametersTree.getRawParameterValue("Gain")->load();
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
@@ -154,7 +156,7 @@ void ZliMagFXDistortionAudioProcessor::processBlock (juce::AudioBuffer<float>& b
     {
         auto* channelData = buffer.getWritePointer (channel);
         for(auto sample = 0; sample < buffer.getNumSamples(); sample++) {
-            auto gainedSampleValue = channelData[sample] * 10;
+            auto gainedSampleValue = channelData[sample] * gainParam;
             channelData[sample] = gainedSampleValue > 0.5 ? 0.5 : gainedSampleValue;
         }
     }
@@ -196,7 +198,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 juce::AudioProcessorValueTreeState::ParameterLayout ZliMagFXDistortionAudioProcessor::createParameterLayout() {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     
-    juce::NormalisableRange<float> gainRange {0.0, 10.0, 0.05, 1.0};
+    juce::NormalisableRange<float> gainRange {0.0, 666.0, 0.5, 1.0};
     juce::ParameterID gainId {"Gain", 1};
     layout.add(std::make_unique<juce::AudioParameterFloat>(gainId, "Gain", gainRange, 0));
     
