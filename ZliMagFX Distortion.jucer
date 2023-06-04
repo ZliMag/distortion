@@ -2,7 +2,9 @@
 
 <JUCERPROJECT id="NSmC6Z" name="ZliMagFX Distortion" projectType="audioplug"
               useAppConfig="0" addUsingNamespaceToJuceHeader="0" displaySplashScreen="1"
-              jucerFormatVersion="1">
+              jucerFormatVersion="1" companyName="ZliMag FX" companyEmail="filip.defar@protonmail.com"
+              companyWebsite="https://github.com/ZliMag" pluginName="Distortion"
+              pluginDesc="Distortion">
   <MAINGROUP id="SKIpPx" name="ZliMagFX Distortion">
     <GROUP id="{9089A42C-13FE-259F-C347-35CBF5759BB9}" name="Source">
       <FILE id="o2jkYc" name="PluginProcessor.cpp" compile="1" resource="0"
