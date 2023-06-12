@@ -65,6 +65,8 @@ private:
 //    juce::dsp::IIR::Coefficients<float>::Ptr lowPassCoefficients;
 //    juce::dsp::IIR::Filter<float> lowPassFilter;
     
+    juce::dsp::IIR::Filter<float> filter;
+    
     juce::dsp::ProcessorDuplicator <juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients <float>> highShelfCutFilter;
     juce::dsp::ProcessorDuplicator <juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients <float>> highShelfBoostFilter;
     //==============================================================================

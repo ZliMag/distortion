@@ -19,10 +19,11 @@ ZliMagFXDistortionAudioProcessor::ZliMagFXDistortionAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       ), highShelfCutFilter(juce::dsp::IIR::Coefficients<float>::makeHighShelf(44100, 5000, 0.5, 0.05)),
-                        highShelfBoostFilter(juce::dsp::IIR::Coefficients<float>::makeHighShelf(44100, 5000, 0.5, 20))
+                       ), highShelfCutFilter(juce::dsp::IIR::Coefficients<float>::makeHighShelf(44100, 5000, 0.1, 0.25)),
+                        highShelfBoostFilter(juce::dsp::IIR::Coefficients<float>::makeHighShelf(44100, 5000, 0.1, 4))
 #endif
 {
+    filter = juce::dsp::IIR::Filter <float> { juce::dsp::IIR::Coefficients<float>::makeHighShelf(44100, 5000, 0.1, 0.1) };
 }
 
 ZliMagFXDistortionAudioProcessor::~ZliMagFXDistortionAudioProcessor()
@@ -110,6 +111,9 @@ void ZliMagFXDistortionAudioProcessor::prepareToPlay (double sampleRate, int sam
     
     highShelfBoostFilter.prepare(spec);
     highShelfBoostFilter.reset();
+    
+    filter.prepare(spec);
+    filter.reset();
 }
 
 void ZliMagFXDistortionAudioProcessor::releaseResources()
@@ -162,9 +166,12 @@ void ZliMagFXDistortionAudioProcessor::processBlock (juce::AudioBuffer<float>& b
     juce::dsp::AudioBlock<float> block { buffer };
     juce::dsp::ProcessContextReplacing<float> processContext {block};
 
-    highShelfBoostFilter.process(processContext);
-    
+//    highShelfBoostFilter.process(processContext);
+//    highShelfCutFilter.process(processContext);
+
     auto gainParam = parametersTree.getRawParameterValue("Gain")->load();
+    auto dryWetParam = parametersTree.getRawParameterValue("DryWet")->load();
+    
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
@@ -177,11 +184,15 @@ void ZliMagFXDistortionAudioProcessor::processBlock (juce::AudioBuffer<float>& b
         auto* channelData = buffer.getWritePointer (channel);
         for(auto sample = 0; sample < buffer.getNumSamples(); sample++) {
             auto gainedSampleValue = channelData[sample] * gainParam;
-            channelData[sample] = juce::dsp::FastMathApproximations::tanh(gainedSampleValue);
+            auto distorted = juce::dsp::FastMathApproximations::tanh(gainedSampleValue);
+            auto distortedFiltered = filter.processSample(distorted);
+
+            auto clean = channelData[sample] * 10.0 ;
+            channelData[sample] = (distorted * 0.5 + distortedFiltered * 0.5) * dryWetParam + clean * (1.0-dryWetParam);
         }
     }
     
-    highShelfCutFilter.process(processContext);
+//    highShelfCutFilter.process(processContext);
 }
 
 //==============================================================================
@@ -222,7 +233,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout ZliMagFXDistortionAudioProce
     
     juce::NormalisableRange<float> gainRange {0.0, 10000.0, 0.5, 1.0};
     juce::ParameterID gainId {"Gain", 1};
-    layout.add(std::make_unique<juce::AudioParameterFloat>(gainId, "Gain", gainRange, 0));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(gainId, "Gain", gainRange, 50));
+    
+    juce::NormalisableRange<float> dryWetRange {0.0, 1.0, 0.01, 1.0};
+    juce::ParameterID dryWetId {"DryWet", 1};
+    layout.add(std::make_unique<juce::AudioParameterFloat>(dryWetId, "DryWet", dryWetRange, 0.5));
     
     return layout;
 }
