@@ -157,13 +157,7 @@ void ZliMagFXDistortionAudioProcessor::processBlock (juce::AudioBuffer<float>& b
         auto* channelData = buffer.getWritePointer (channel);
         for(auto sample = 0; sample < buffer.getNumSamples(); sample++) {
             auto gainedSampleValue = channelData[sample] * gainParam;
-            if(gainedSampleValue > 1) {
-                channelData[sample] = 1;
-            } else if (gainedSampleValue < -1) {
-                channelData[sample] = -1;
-            } else {
-                channelData[sample] = gainedSampleValue;
-            }
+            channelData[sample] = (2.f / PI) * atan(gainedSampleValue);
         }
     }
 }
@@ -204,7 +198,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 juce::AudioProcessorValueTreeState::ParameterLayout ZliMagFXDistortionAudioProcessor::createParameterLayout() {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     
-    juce::NormalisableRange<float> gainRange {0.0, 666.0, 0.5, 1.0};
+    juce::NormalisableRange<float> gainRange {0.0, 10000.0, 0.5, 1.0};
     juce::ParameterID gainId {"Gain", 1};
     layout.add(std::make_unique<juce::AudioParameterFloat>(gainId, "Gain", gainRange, 0));
     
