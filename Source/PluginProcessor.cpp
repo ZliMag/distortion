@@ -19,7 +19,8 @@ ZliMagFXDistortionAudioProcessor::ZliMagFXDistortionAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), highShelfCutFilter(juce::dsp::IIR::Coefficients<float>::makeHighShelf(44100, 5000, 0.5, 0.05)),
+                        highShelfBoostFilter(juce::dsp::IIR::Coefficients<float>::makeHighShelf(44100, 5000, 0.5, 20))
 #endif
 {
 }
@@ -95,6 +96,20 @@ void ZliMagFXDistortionAudioProcessor::prepareToPlay (double sampleRate, int sam
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    
+//    lowPassFilter = juce::dsp::IIR::Filter<float> {}
+            
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = getTotalNumOutputChannels();
+    
+ 
+    highShelfCutFilter.prepare(spec);
+    highShelfCutFilter.reset();
+    
+    highShelfBoostFilter.prepare(spec);
+    highShelfBoostFilter.reset();
 }
 
 void ZliMagFXDistortionAudioProcessor::releaseResources()
@@ -144,6 +159,11 @@ void ZliMagFXDistortionAudioProcessor::processBlock (juce::AudioBuffer<float>& b
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
+    juce::dsp::AudioBlock<float> block { buffer };
+    juce::dsp::ProcessContextReplacing<float> processContext {block};
+
+    highShelfBoostFilter.process(processContext);
+    
     auto gainParam = parametersTree.getRawParameterValue("Gain")->load();
 
     // This is the place where you'd normally do the guts of your plugin's
@@ -157,9 +177,11 @@ void ZliMagFXDistortionAudioProcessor::processBlock (juce::AudioBuffer<float>& b
         auto* channelData = buffer.getWritePointer (channel);
         for(auto sample = 0; sample < buffer.getNumSamples(); sample++) {
             auto gainedSampleValue = channelData[sample] * gainParam;
-            channelData[sample] =  juce::dsp::FastMathApproximations::tanh(gainedSampleValue);
+            channelData[sample] = juce::dsp::FastMathApproximations::tanh(gainedSampleValue);
         }
     }
+    
+    highShelfCutFilter.process(processContext);
 }
 
 //==============================================================================

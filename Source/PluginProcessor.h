@@ -62,6 +62,11 @@ public:
   
 
 private:
+//    juce::dsp::IIR::Coefficients<float>::Ptr lowPassCoefficients;
+//    juce::dsp::IIR::Filter<float> lowPassFilter;
+    
+    juce::dsp::ProcessorDuplicator <juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients <float>> highShelfCutFilter;
+    juce::dsp::ProcessorDuplicator <juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients <float>> highShelfBoostFilter;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ZliMagFXDistortionAudioProcessor)
 };
